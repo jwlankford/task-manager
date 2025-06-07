@@ -16,7 +16,6 @@
         <input type="checkbox" v-model="task.completed" />
         <span>{{ task.text }}</span>
         <button @click="removeTask(index)">Remove</button>
-        <p>test</p>
       </li>
     </ul>
   </div>
