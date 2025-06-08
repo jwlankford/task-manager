@@ -8,41 +8,25 @@
           </v-card-title>
 
           <v-card-text>
-            <v-row no-gutters class="mb-6 align-center">
-              <v-col cols="12" sm="9"> <v-text-field
+            <v-row no-gutters class="mb-6 align-center" v-if="!isMobile">
+              <v-col cols="12" sm="9">
+                <v-text-field
                   v-model="newTask"
-                  :label="editingTask ? 'Edit task...' : 'Add a new task...'"
+                  label="Add a new task..."
                   variant="outlined"
                   density="comfortable"
                   hide-details
-                  @keyup.enter="editingTask ? saveEditedTask() : addTask()"
-                  :autofocus="editingTask !== null"
-                  ref="taskInput"
+                  @keyup.enter="addTask"
+                  ref="addTaskInput"
                 ></v-text-field>
               </v-col>
-              <v-col cols="12" sm="3" class="d-flex justify-end mt-2 mt-sm-0"> <v-btn
-                  v-if="!editingTask"
+              <v-col cols="12" sm="3" class="d-flex justify-end mt-2 mt-sm-0">
+                <v-btn
                   icon="mdi-plus-circle"
                   color="green-darken-2"
                   size="large"
                   class="ml-2"
                   @click="addTask"
-                ></v-btn>
-                <v-btn
-                  v-if="editingTask"
-                  icon="mdi-check"
-                  color="green-darken-2"
-                  size="large"
-                  class="ml-2"
-                  @click="saveEditedTask"
-                ></v-btn>
-                <v-btn
-                  v-if="editingTask"
-                  icon="mdi-close"
-                  color="red-darken-1"
-                  size="large"
-                  class="ml-2"
-                  @click="cancelEdit"
                 ></v-btn>
               </v-col>
             </v-row>
@@ -72,7 +56,7 @@
                     variant="text"
                     color="blue-darken-1"
                     @click="startEditing(task)"
-                    :disabled="!!editingTask"
+                    :disabled="showEditDialog"
                   ></v-btn>
                   <v-btn
                     icon="mdi-delete"
@@ -90,6 +74,48 @@
         </v-card>
       </v-container>
     </v-main>
+
+    <v-dialog
+      v-model="showEditDialog"
+      :fullscreen="$vuetify.display.mobile"
+      :scrim="!$vuetify.display.mobile"
+      max-width="500px"
+      transition="dialog-bottom-transition"
+    >
+      <v-card :class="{ 'rounded-0': $vuetify.display.mobile }">
+        <v-toolbar
+          :color="$vuetify.display.mobile ? 'green-darken-3' : 'white'"
+          :flat="$vuetify.display.mobile"
+        >
+          <v-btn icon @click="cancelEdit">
+            <v-icon :color="$vuetify.display.mobile ? 'white' : 'grey-darken-1'">mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title :class="{ 'text-white': $vuetify.display.mobile }">Edit Task</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-btn
+              variant="text"
+              @click="saveEditedTask"
+              :color="$vuetify.display.mobile ? 'white' : 'green-darken-2'"
+            >
+              Save
+            </v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="newTask"
+            label="Edit task..."
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            @keyup.enter="saveEditedTask"
+            autofocus
+            ref="editTaskInput"
+          ></v-text-field>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -119,7 +145,14 @@ export default {
       newTask: '',
       tasks: [],
       editingTask: null, // Stores the ID of the task being edited
+      showEditDialog: false, // Controls the visibility of the edit overlay
     };
+  },
+  computed: {
+    isMobile() {
+      // Access Vuetify's display breakpoint information
+      return this.$vuetify.display.mobile;
+    }
   },
   created() {
     this.fetchTasks();
@@ -137,7 +170,6 @@ export default {
     },
     async addTask() {
       if (this.newTask.trim() === '') {
-        // Prevent adding empty tasks
         return;
       }
       try {
@@ -146,7 +178,7 @@ export default {
           completed: false,
           createdAt: new Date(),
         });
-        this.newTask = ''; // Clear the input after adding
+        this.newTask = '';
       } catch (error) {
         console.error("Error adding document: ", error);
       }
@@ -165,16 +197,20 @@ export default {
       const taskRef = doc(db, 'tasks', id);
       try {
         await deleteDoc(taskRef);
+       fungicideDoc(taskRef);
       } catch (error) {
         console.error("Error removing document: ", error);
       }
     },
     startEditing(task) {
       this.editingTask = task.id;
-      this.newTask = task.text; // Populate the input field with the task's current text
-      // Focus the input field when starting edit
+      this.newTask = task.text;
+      this.showEditDialog = true; // Open the dialog
       this.$nextTick(() => {
-        this.$refs.taskInput.focus();
+        // Focus the input inside the dialog after it opens
+        if (this.$refs.editTaskInput) {
+          this.$refs.editTaskInput.focus();
+        }
       });
     },
     async saveEditedTask() {
@@ -184,13 +220,13 @@ export default {
         return;
       }
 
-      if (this.editingTask) { // Ensure we are in edit mode
+      if (this.editingTask) {
         const taskRef = doc(db, 'tasks', this.editingTask);
         try {
           await updateDoc(taskRef, {
             text: this.newTask.trim(),
           });
-          this.cancelEdit(); // Reset editing state
+          this.cancelEdit(); // Reset editing state and close dialog
         } catch (error) {
           console.error("Error updating document: ", error);
         }
@@ -198,7 +234,8 @@ export default {
     },
     cancelEdit() {
       this.editingTask = null;
-      this.newTask = ''; // Clear the input field
+      this.newTask = '';
+      this.showEditDialog = false; // Close the dialog
     },
   },
 };
@@ -206,5 +243,4 @@ export default {
 
 <style>
 /* No more custom CSS needed, Vuetify handles it! */
-/* You can remove any previous <style> block completely */
 </style>
