@@ -40,9 +40,42 @@
                   </v-list-item-action>
                 </template>
 
-                <v-list-item-title class="text-h6 py-2">{{ task.text }}</v-list-item-title>
+                <v-list-item-title v-if="editingTask !== task.id" class="text-h6 py-2">{{ task.text }}</v-list-item-title>
+                <v-list-item-content v-else>
+                  <v-text-field
+                    v-model="editedTaskText"
+                    label="Edit task"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    @keyup.enter="saveEdit(task)"
+                    @keyup.esc="cancelEdit"
+                    autofocus
+                  ></v-text-field>
+                </v-list-item-content>
 
                 <template v-slot:append>
+                  <v-btn
+                    v-if="editingTask !== task.id"
+                    icon="mdi-pencil"
+                    variant="text"
+                    color="blue-darken-1"
+                    @click="startEditing(task)"
+                  ></v-btn>
+                  <v-btn
+                    v-else
+                    icon="mdi-check"
+                    variant="text"
+                    color="green-darken-2"
+                    @click="saveEdit(task)"
+                  ></v-btn>
+                  <v-btn
+                    v-if="editingTask === task.id"
+                    icon="mdi-close"
+                    variant="text"
+                    color="grey-darken-1"
+                    @click="cancelEdit"
+                  ></v-btn>
                   <v-btn
                     icon="mdi-delete"
                     variant="text"
@@ -87,6 +120,8 @@ export default {
     return {
       newTask: '',
       tasks: [],
+      editingTask: null, // Stores the ID of the task being edited
+      editedTaskText: '', // Stores the text for the task being edited
     };
   },
   created() {
@@ -134,6 +169,30 @@ export default {
       } catch (error) {
         console.error("Error removing document: ", error);
       }
+    },
+    startEditing(task) {
+      this.editingTask = task.id;
+      this.editedTaskText = task.text;
+    },
+    async saveEdit(task) {
+      if (this.editedTaskText.trim() === '') {
+        // Optionally, you could prevent saving an empty task or show a warning
+        this.cancelEdit();
+        return;
+      }
+      const taskRef = doc(db, 'tasks', task.id);
+      try {
+        await updateDoc(taskRef, {
+          text: this.editedTaskText.trim(),
+        });
+        this.cancelEdit(); // Reset editing state
+      } catch (error) {
+        console.error("Error updating document: ", error);
+      }
+    },
+    cancelEdit() {
+      this.editingTask = null;
+      this.editedTaskText = '';
     },
   },
 };
