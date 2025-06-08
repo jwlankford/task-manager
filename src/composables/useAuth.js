@@ -1,70 +1,62 @@
 // src/composables/useAuth.js
-import { ref } from 'vue'; // No need for onMounted, onUnmounted here
+import { ref } from 'vue';
+import { auth } from '@/firebaseConfig'; // Ensure this path is correct for your Firebase config
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  sendPasswordResetEmail
+  createUserWithEmailAndPassword // Import createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
 
-// These will be globally reactive and update whenever the auth state changes
-// The onAuthStateChanged listener runs once on app load and then on every auth state change.
+// Reactive state for the current user and loading status
 const currentUser = ref(null);
-const authLoading = ref(true);
+const authLoading = ref(true); // Set to true initially while checking auth state
 
-// This listener should be set up only once when the app starts
-// It's outside the useAuth function so it runs on app initialization
-// and continuously listens for changes.
+// Initialize auth state listener once
 onAuthStateChanged(auth, (user) => {
   currentUser.value = user;
   authLoading.value = false;
+  console.log('Auth state changed:', user ? user.email : 'No user');
 });
 
 export function useAuth() {
-  // The functions inside here are called within component setup()
-  // so they have access to component context if needed, but for auth
-  // operations, they just need the 'auth' instance.
-
-  const signup = async (email, password) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const login = async (email, password) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      console.log('Logged in successfully!');
     } catch (error) {
-      throw error;
+      console.error('Login failed:', error.message);
+      throw error; // Re-throw to be caught by component
     }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
+      console.log('Logged out successfully!');
     } catch (error) {
-      throw error;
+      console.error('Logout failed:', error.message);
+      throw error; // Re-throw to be caught by component
     }
   };
 
-  const resetPassword = async (email) => {
+  // ADD THIS NEW REGISTER FUNCTION
+  const register = async (email, password) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Registered successfully!');
     } catch (error) {
-      throw error;
+      console.error('Registration failed:', error.message);
+      throw error; // Re-throw to be caught by component
     }
   };
+
 
   return {
-    currentUser,    // Export the reactive ref
-    authLoading,    // Export the reactive ref
-    signup,
+    currentUser,
+    authLoading,
     login,
     logout,
-    resetPassword,
+    register, // EXPOSE THE REGISTER FUNCTION
   };
 }

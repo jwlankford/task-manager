@@ -3,11 +3,11 @@
     <v-container class="max-w-xs">
       <v-card class="pa-6 rounded-xl elevation-12">
         <v-card-title class="text-h4 text-center text-green-darken-3 font-weight-bold mb-6">
-          Login
+          Register
         </v-card-title>
 
         <v-card-text>
-          <v-form @submit.prevent="handleSubmit">
+          <v-form @submit.prevent="handleRegister">
             <v-text-field
               v-model="email"
               label="Email"
@@ -30,6 +30,18 @@
               required
             ></v-text-field>
 
+            <v-text-field
+              v-model="confirmPassword"
+              label="Confirm Password"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append-inner="showConfirmPassword = !showConfirmPassword"
+              variant="outlined"
+              prepend-inner-icon="mdi-lock"
+              class="mb-4"
+              required
+            ></v-text-field>
+
             <v-alert
               v-if="error"
               type="error"
@@ -45,23 +57,23 @@
               size="large"
               type="submit"
               :loading="loading"
-              :disabled="loading || !email || !password"
+              :disabled="loading || !email || !password || !confirmPassword"
               class="mb-4"
             >
-              Log In
+              Register
             </v-btn>
           </v-form>
 
           <v-divider class="my-4"></v-divider>
 
           <div class="text-center">
-            <p>Don't have an account?</p>
+            <p>Already have an account?</p>
             <v-btn
               variant="text"
               color="green-darken-3"
-              @click="router.push('/register')"
+              @click="router.push('/login')"
             >
-              Register Here
+              Login Here
             </v-btn>
           </div>
         </v-card-text>
@@ -73,33 +85,41 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuth } from '@/composables/useAuth'; // Adjust path if necessary
+import { useAuth } from '@/composables/useAuth'; // Adjust path
 
 const email = ref('');
 const password = ref('');
+const confirmPassword = ref(''); // Added for confirmation
 const error = ref('');
 const loading = ref(false);
 
-const showPassword = ref(false); // Reactive variable to control password visibility
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
-const { login } = useAuth();
+const { register } = useAuth(); // Assuming useAuth has a register function
 const router = useRouter();
 
-const handleSubmit = async () => {
+const handleRegister = async () => {
   error.value = '';
   loading.value = true;
 
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match.';
+    loading.value = false;
+    return;
+  }
+
   try {
-    await login(email.value, password.value);
-    router.push('/'); // Redirect to the main task manager view after successful login
+    await register(email.value, password.value); // Assuming useAuth has a register method
+    router.push('/'); // Redirect to home after successful registration
   } catch (err) {
-    if (err.code === 'auth/invalid-credential') {
-      error.value = 'Invalid email or password.';
-    } else if (err.code === 'auth/user-not-found') {
-      error.value = 'No account found with this email.';
+    if (err.code === 'auth/email-already-in-use') {
+      error.value = 'Email already in use. Please try logging in.';
+    } else if (err.code === 'auth/weak-password') {
+      error.value = 'Password should be at least 6 characters.';
     } else {
-      error.value = 'Failed to log in. Please try again.';
-      console.error("Login error:", err.message);
+      error.value = 'Registration failed. Please try again.';
+      console.error("Registration error:", err.message);
     }
   } finally {
     loading.value = false;
@@ -108,5 +128,5 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-/* You can add specific styles for this component here if needed */
+/* Add any specific styles for the Register view here */
 </style>

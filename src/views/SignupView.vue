@@ -3,7 +3,9 @@
     <v-main class="d-flex align-center justify-center bg-grey-lighten-3">
       <v-container class="max-w-md">
         <v-card class="pa-6 rounded-xl elevation-12">
-          <v-card-title class="text-h4 text-center text-green-darken-3 font-weight-bold mb-6">
+          <v-card-title
+            class="text-h4 text-center text-green-darken-3 font-weight-bold mb-6"
+          >
             Sign Up
           </v-card-title>
 
@@ -27,6 +29,9 @@
                 class="mb-4"
                 type="password"
                 required
+                :type="showPassword ? 'text' : 'password'"
+                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                @click:append-inner="showPassword = !showPassword"
               ></v-text-field>
 
               <v-text-field
@@ -63,7 +68,8 @@
             </v-form>
 
             <div class="text-center mt-6">
-              Already have an account? <router-link to="/login">Log In</router-link>
+              Already have an account?
+              <router-link to="/login">Log In</router-link>
             </div>
           </v-card-text>
         </v-card>
@@ -73,14 +79,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuth } from '@/composables/useAuth'; // Adjust path based on your project structure
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuth } from "@/composables/useAuth"; // Adjust path based on your project structure
 
-const email = ref('');
-const password = ref('');
-const passwordConfirm = ref('');
-const error = ref('');
+const email = ref("");
+const password = ref("");
+const passwordConfirm = ref("");
+const error = ref("");
 const loading = ref(false);
 
 const { signup } = useAuth();
@@ -88,24 +94,24 @@ const router = useRouter();
 
 const handleSubmit = async () => {
   if (password.value !== passwordConfirm.value) {
-    error.value = 'Passwords do not match.';
+    error.value = "Passwords do not match.";
     return;
   }
 
-  error.value = '';
+  error.value = "";
   loading.value = true;
 
   try {
     await signup(email.value, password.value);
-    router.push('/'); // Redirect to the main task manager view after successful signup
+    router.push("/"); // Redirect to the main task manager view after successful signup
   } catch (err) {
     // Firebase errors have a 'code' property
-    if (err.code === 'auth/email-already-in-use') {
-      error.value = 'This email is already in use.';
-    } else if (err.code === 'auth/weak-password') {
-      error.value = 'Password should be at least 6 characters.';
+    if (err.code === "auth/email-already-in-use") {
+      error.value = "This email is already in use.";
+    } else if (err.code === "auth/weak-password") {
+      error.value = "Password should be at least 6 characters.";
     } else {
-      error.value = 'Failed to create an account. Please try again.';
+      error.value = "Failed to create an account. Please try again.";
       console.error("Signup error:", err.message);
     }
   } finally {
