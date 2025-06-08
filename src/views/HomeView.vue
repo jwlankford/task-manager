@@ -4,8 +4,24 @@
       <v-card class="pa-6 rounded-xl elevation-12">
         <v-card-title
           class="d-flex justify-space-between align-center text-h4 text-center text-green-darken-3 font-weight-bold mb-6">
+
+          <v-app-bar-nav-icon
+            v-if="isMobile"
+            @click.stop="drawerVisible = !drawerVisible"
+            aria-label="Open menu"
+            class="mr-2"
+          ></v-app-bar-nav-icon>
+
           My Task Manager
-          <v-btn icon="mdi-logout" variant="text" color="red-darken-1" @click="handleLogout" title="Logout"></v-btn>
+
+          <v-btn
+            v-if="!isMobile"
+            icon="mdi-logout"
+            variant="text"
+            color="red-darken-1"
+            @click="handleLogout"
+            title="Logout"
+          ></v-btn>
         </v-card-title>
 
         <v-card-text>
@@ -70,6 +86,24 @@
     </v-container>
   </v-main>
 
+  <v-navigation-drawer
+    v-if="isMobile"
+    v-model="drawerVisible"
+    temporary
+    location="right"
+    width="250"
+  >
+    <v-list density="compact">
+      <v-list-item
+        prepend-icon="mdi-logout"
+        title="Logout"
+        @click="handleLogoutAndCloseDrawer"
+        color="red-darken-1"
+      ></v-list-item>
+    </v-list>
+  </v-navigation-drawer>
+
+
   <v-dialog v-model="showEditDialog" :fullscreen="isMobile" :scrim="!isMobile" max-width="500px" transition="dialog-bottom-transition">
     <v-card class="pa-4 rounded-xl elevation-12">
       <v-card-title class="text-h5 text-center mb-4">Edit Task</v-card-title>
@@ -82,13 +116,15 @@
           hide-details
           @keyup.enter="saveEditedTask"
           ref="editTaskInput"
-          class="mb-4" ></v-text-field>
+          class="mb-4"
+        ></v-text-field>
         <v-btn
           color="success"
           variant="elevated"
           block
           @click="saveEditedTask"
-          class="mb-4" >Save</v-btn>
+          class="mb-4"
+        >Save</v-btn>
       </v-card-text>
       <v-card-actions class="justify-end">
         <v-btn color="error" variant="text" @click="cancelEdit">Cancel</v-btn>
@@ -112,24 +148,23 @@ export default {
     const { currentUser, authLoading, logout } = useAuth();
     const router = useRouter();
 
-    // 1. Declare all reactive state variables (refs) first
     const newTask = ref('');
     const tasks = ref([]);
     const editingTask = ref(null);
     const showEditDialog = ref(false);
 
-    const addTaskInput = ref(null); // Ref for focusing new task input
-    const editTaskInput = ref(null); // Ref for focusing edit task input
+    const addTaskInput = ref(null);
+    const editTaskInput = ref(null);
+
+    // New reactive variable for drawer visibility
+    const drawerVisible = ref(false);
 
     const isMobile = computed(() => {
-      // Access useDisplay directly here for computed property
       return useDisplay().mobile.value;
     });
 
-    // 2. Define all functions that will be used
-    // This function FETCHES tasks from Firestore
     const fetchTasks = (userId) => {
-      console.log('fetchTasks function DEFINITION called with userId:', userId); // Log from definition
+      console.log('fetchTasks function DEFINITION called with userId:', userId);
 
       if (!userId) {
           console.warn("fetchTasks called with no userId, clearing tasks.");
@@ -143,7 +178,6 @@ export default {
         orderBy('createdAt', 'asc')
       );
 
-      // onSnapshot will listen for real-time updates and automatically update 'tasks' ref
       onSnapshot(q, (snapshot) => {
         console.log('onSnapshot listener triggered!');
         const firebaseTasks = [];
@@ -152,14 +186,13 @@ export default {
           firebaseTasks.push(taskData);
           console.log('  - Added task from Firestore:', taskData);
         });
-        tasks.value = firebaseTasks; // Update the reactive tasks array
+        tasks.value = firebaseTasks;
         console.log('Tasks array updated. Current tasks:', tasks.value);
       }, (error) => {
           console.error("Error in onSnapshot listener:", error);
       });
     };
 
-    // This function ADDS a new task to Firestore
     const addTask = async () => {
       console.log('addTask function called!');
       console.log('newTask value:', newTask.value);
@@ -170,7 +203,7 @@ export default {
         return;
       }
 
-      if (!currentUser.value) { // Double check currentUser before adding
+      if (!currentUser.value) {
         console.warn("No user logged in, cannot add task.");
         return;
       }
@@ -180,22 +213,20 @@ export default {
           text: newTask.value.trim(),
           completed: false,
           createdAt: new Date(),
-          userId: currentUser.value.uid, // Ensure userId is saved with the task
+          userId: currentUser.value.uid,
         });
-        newTask.value = ''; // Clear the input field
+        newTask.value = '';
         console.log('Task added successfully to Firestore!');
       } catch (error) {
         console.error("Error adding document to Firestore: ", error);
       }
     };
 
-    // This function TOGGLES the completion status of a task in Firestore
     const toggleTaskCompletion = async (task) => {
       const taskRef = doc(db, 'tasks', task.id);
       try {
-        // Toggle the completed status based on its current value
         await updateDoc(taskRef, {
-          completed: !task.completed, // Toggle the value
+          completed: !task.completed,
         });
         console.log('Task completion toggled in Firestore for:', task.id);
       } catch (error) {
@@ -203,7 +234,6 @@ export default {
       }
     };
 
-    // This function REMOVES a task from Firestore
     const removeTask = async (id) => {
       const taskRef = doc(db, 'tasks', id);
       try {
@@ -214,19 +244,17 @@ export default {
       }
     };
 
-    // This function prepares the dialog for editing a task
     const startEditing = (task) => {
-      editingTask.value = task.id; // Store the ID of the task being edited
-      newTask.value = task.text; // Populate the input with the current task text
-      showEditDialog.value = true; // Show the dialog
-      nextTick(() => { // Focus the input field after the dialog is rendered
+      editingTask.value = task.id;
+      newTask.value = task.text;
+      showEditDialog.value = true;
+      nextTick(() => {
         if (editTaskInput.value) {
           editTaskInput.value.focus();
         }
       });
     };
 
-    // This function saves the edited task to Firestore
     const saveEditedTask = async () => {
       if (newTask.value.trim() === '') {
         console.warn("Task cannot be empty. Edit cancelled.");
@@ -234,61 +262,60 @@ export default {
         return;
       }
 
-      if (editingTask.value) { // Ensure there's a task being edited
+      if (editingTask.value) {
         const taskRef = doc(db, 'tasks', editingTask.value);
         try {
           await updateDoc(taskRef, {
-            text: newTask.value.trim(), // Update the task text
+            text: newTask.value.trim(),
           });
           console.log('Task updated in Firestore:', editingTask.value);
-          cancelEdit(); // Close the dialog and clear state
+          cancelEdit();
         } catch (error) {
           console.error("Error updating document: ", error);
         }
       }
     };
 
-    // This function cancels the edit operation and closes the dialog
     const cancelEdit = () => {
       editingTask.value = null;
-      newTask.value = ''; // Clear the input field
+      newTask.value = '';
       showEditDialog.value = false;
       console.log('Edit cancelled.');
     };
 
-    // This function handles user logout
     const handleLogout = async () => {
       try {
-        await logout(); // Call logout from useAuth composable
-        router.push('/login'); // Redirect to login page
+        await logout();
+        router.push('/login');
         console.log('Logged out successfully.');
       } catch (err) {
         console.error('Failed to log out:', err.message);
       }
     };
 
-    // 3. Set up watchers and lifecycle hooks (which now have access to defined functions)
-    // Watch for changes in currentUser and fetch tasks accordingly
+    // New function to handle logout from the drawer and close it
+    const handleLogoutAndCloseDrawer = async () => {
+      await handleLogout(); // Perform the actual logout
+      drawerVisible.value = false; // Close the drawer
+    };
+
     watch(currentUser, (user) => {
       console.log('Watcher: currentUser changed to:', user ? user.email : 'null');
       if (user) {
-        fetchTasks(user.uid); // Call the defined fetchTasks function with the user's UID
+        fetchTasks(user.uid);
       } else {
-        tasks.value = []; // Clear tasks if no user is logged in
+        tasks.value = [];
       }
-    }, { immediate: true }); // Run immediately on component mount if currentUser is already set
+    }, { immediate: true });
 
-
-    // 4. Return everything you want to expose to the template
     return {
-      // Reactive state
       newTask,
       tasks,
       editingTask,
       showEditDialog,
       isMobile,
+      drawerVisible, // Expose drawerVisible to the template
 
-      // Functions
       addTask,
       toggleTaskCompletion,
       removeTask,
@@ -296,12 +323,11 @@ export default {
       saveEditedTask,
       cancelEdit,
       handleLogout,
+      handleLogoutAndCloseDrawer, // Expose the new logout function
 
-      // From useAuth
       currentUser,
       authLoading,
 
-      // Template refs for input focusing
       addTaskInput,
       editTaskInput
     };
@@ -310,10 +336,9 @@ export default {
 </script>
 
 <style scoped>
-/* Optional: Basic styling for completed tasks */
 .completed-task {
   text-decoration: line-through;
-  color: #888; /* Dim the text for completed tasks */
-  background-color: #f0f0f0; /* Light background for completed tasks */
+  color: #888;
+  background-color: #f0f0f0;
 }
 </style>
