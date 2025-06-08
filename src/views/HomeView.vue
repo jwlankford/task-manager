@@ -60,7 +60,7 @@
             </v-col>
             <v-col cols="12" sm="3" class="mt-4 mt-sm-0 pl-sm-2">
               <v-btn
-                :color="currentTheme === 'dark' ? 'black' : 'green-darken-3'"
+                :color="currentTheme === 'dark' ? 'success' : 'green-darken-3'"
                 variant="elevated"
                 block
                 @click="addTask"

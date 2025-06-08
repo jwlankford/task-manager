@@ -53,7 +53,9 @@
             </v-btn>
           </v-form>
 
-          <v-divider class="my-4" text="OR"></v-divider> <v-btn
+          <v-divider class="my-4" text="OR"></v-divider>
+
+          <v-btn
             color="white"
             class="elevation-2 text-none"
             block
@@ -89,6 +91,10 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useThemeMode } from '@/composables/useThemeMode'; // Import the theme composable
+
+// Call the theme composable to initialize theme based on OS/localStorage
+useThemeMode();
 
 const email = ref('');
 const password = ref('');
@@ -97,7 +103,7 @@ const loading = ref(false);
 
 const showPassword = ref(false);
 
-const { login, signInWithGoogle } = useAuth(); // Destructure signInWithGoogle
+const { login, signInWithGoogle } = useAuth();
 const router = useRouter();
 
 const handleSubmit = async () => {
@@ -121,13 +127,12 @@ const handleSubmit = async () => {
   }
 };
 
-// NEW: Function to handle Google Sign-in
 const handleGoogleSignIn = async () => {
   error.value = '';
   loading.value = true;
   try {
     await signInWithGoogle();
-    router.push('/'); // Redirect to home after successful Google sign-in
+    router.push('/');
   } catch (err) {
     error.value = err.message || 'Failed to sign in with Google. Please try again.';
     console.error("Google Sign-in error:", err);
