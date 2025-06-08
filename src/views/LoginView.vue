@@ -28,6 +28,7 @@
               prepend-inner-icon="mdi-lock"
               class="mb-4"
               required
+              autocomplete="current-password"
             ></v-text-field>
 
             <v-alert
@@ -52,6 +53,20 @@
             </v-btn>
           </v-form>
 
+          <v-divider class="my-4" text="OR"></v-divider> <v-btn
+            color="white"
+            class="elevation-2 text-none"
+            block
+            size="large"
+            prepend-icon="mdi-google"
+            :loading="loading"
+            :disabled="loading"
+            @click="handleGoogleSignIn"
+          >
+            Sign in with Google
+          </v-btn>
+
+
           <v-divider class="my-4"></v-divider>
 
           <div class="text-center">
@@ -73,16 +88,16 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuth } from '@/composables/useAuth'; // Adjust path if necessary
+import { useAuth } from '@/composables/useAuth';
 
 const email = ref('');
 const password = ref('');
 const error = ref('');
 const loading = ref(false);
 
-const showPassword = ref(false); // Reactive variable to control password visibility
+const showPassword = ref(false);
 
-const { login } = useAuth();
+const { login, signInWithGoogle } = useAuth(); // Destructure signInWithGoogle
 const router = useRouter();
 
 const handleSubmit = async () => {
@@ -91,7 +106,7 @@ const handleSubmit = async () => {
 
   try {
     await login(email.value, password.value);
-    router.push('/'); // Redirect to the main task manager view after successful login
+    router.push('/');
   } catch (err) {
     if (err.code === 'auth/invalid-credential') {
       error.value = 'Invalid email or password.';
@@ -101,6 +116,21 @@ const handleSubmit = async () => {
       error.value = 'Failed to log in. Please try again.';
       console.error("Login error:", err.message);
     }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// NEW: Function to handle Google Sign-in
+const handleGoogleSignIn = async () => {
+  error.value = '';
+  loading.value = true;
+  try {
+    await signInWithGoogle();
+    router.push('/'); // Redirect to home after successful Google sign-in
+  } catch (err) {
+    error.value = err.message || 'Failed to sign in with Google. Please try again.';
+    console.error("Google Sign-in error:", err);
   } finally {
     loading.value = false;
   }

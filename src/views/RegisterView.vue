@@ -28,6 +28,7 @@
               prepend-inner-icon="mdi-lock"
               class="mb-4"
               required
+              autocomplete="new-password"
             ></v-text-field>
 
             <v-text-field
@@ -40,6 +41,7 @@
               prepend-inner-icon="mdi-lock"
               class="mb-4"
               required
+              autocomplete="new-password"
             ></v-text-field>
 
             <v-alert
@@ -64,6 +66,20 @@
             </v-btn>
           </v-form>
 
+          <v-divider class="my-4" text="OR"></v-divider> <v-btn
+            color="white"
+            class="elevation-2 text-none"
+            block
+            size="large"
+            prepend-icon="mdi-google"
+            :loading="loading"
+            :disabled="loading"
+            @click="handleGoogleSignIn"
+          >
+            Sign up with Google
+          </v-btn>
+
+
           <v-divider class="my-4"></v-divider>
 
           <div class="text-center">
@@ -85,18 +101,18 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuth } from '@/composables/useAuth'; // Adjust path
+import { useAuth } from '@/composables/useAuth';
 
 const email = ref('');
 const password = ref('');
-const confirmPassword = ref(''); // Added for confirmation
+const confirmPassword = ref('');
 const error = ref('');
 const loading = ref(false);
 
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
-const { register } = useAuth(); // Assuming useAuth has a register function
+const { register, signInWithGoogle } = useAuth(); // Destructure signInWithGoogle
 const router = useRouter();
 
 const handleRegister = async () => {
@@ -110,8 +126,8 @@ const handleRegister = async () => {
   }
 
   try {
-    await register(email.value, password.value); // Assuming useAuth has a register method
-    router.push('/'); // Redirect to home after successful registration
+    await register(email.value, password.value);
+    router.push('/');
   } catch (err) {
     if (err.code === 'auth/email-already-in-use') {
       error.value = 'Email already in use. Please try logging in.';
@@ -121,6 +137,21 @@ const handleRegister = async () => {
       error.value = 'Registration failed. Please try again.';
       console.error("Registration error:", err.message);
     }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// NEW: Function to handle Google Sign-in
+const handleGoogleSignIn = async () => {
+  error.value = '';
+  loading.value = true;
+  try {
+    await signInWithGoogle();
+    router.push('/'); // Redirect to home after successful Google sign-in
+  } catch (err) {
+    error.value = err.message || 'Failed to sign up with Google. Please try again.';
+    console.error("Google Sign-up error:", err);
   } finally {
     loading.value = false;
   }
