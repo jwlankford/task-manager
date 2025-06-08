@@ -4,21 +4,31 @@
 
 ## Description
 
-This is a simple Task Manager application built with **Vue.js** and **Vuetify**, designed to help you efficiently organize and track your daily tasks. You can easily add new tasks, mark them as complete, and delete them when they're no longer needed. The app provides a clean, responsive, and intuitive user interface to manage your to-do list.
+This is a modern and intuitive **Task Manager application** built with **Vue.js 3** and **Vuetify 3**. It's designed to help you efficiently organize and track your daily tasks with robust authentication and a customizable user experience.
 
-This application uses **Firebase** as its backend for data storage and real-time updates.
+The application uses **Firebase** as its backend for secure user authentication (Email/Password, Google Sign-in) and real-time data storage (Firestore) to ensure all your tasks are persistent and accessible across sessions.
 
 ---
 
 ## Features
 
-* **Add Tasks:** Quickly add new tasks to your list.
-* **Mark as Complete:** Toggle the completion status of tasks.
-* **Delete Tasks:** Remove tasks you no longer need.
-* **Persistent Storage:** All your tasks are saved and retrieved from a Firebase backend.
-* **User-Friendly Interface:** Built with Vue.js and Vuetify for a modern and responsive design.
+* **User Authentication:**
+    * **Email & Password:** Securely register and log in to your account.
+    * **Google Sign-in:** Quick and easy authentication using your Google account.
+* **Task Management:**
+    * **Add Tasks:** Quickly add new tasks to your personalized list.
+    * **Mark as Complete:** Toggle the completion status of tasks.
+    * **Edit Tasks:** Modify existing task descriptions via a responsive overlay dialog, which is full-screen on mobile for an optimal experience.
+    * **Delete Tasks:** Permanently remove tasks you no longer need.
+* **Real-time Data:** All your tasks are synchronized in real-time with Firebase Firestore.
+* **Responsive Design:** Built with Vuetify for a clean, modern, and adaptive user interface across all devices (desktop, tablet, mobile).
+* **Password Visibility Toggle:** Easily show/hide password text on login and registration forms for improved usability and security.
+* **Dark/Light Mode:**
+    * Toggle between dark and light themes with a dedicated button.
+    * Automatically detects and applies your operating system's preferred theme on initial load.
+    * Persists your chosen theme preference across sessions using local storage.
+* **Mobile-Friendly Navigation:** Logout functionality is integrated into a slide-out navigation drawer on mobile viewports for easy access.
 
----
 
 ## Installation
 
@@ -52,17 +62,42 @@ To get this Task Manager application running on your local machine, follow these
 
 ## How to Use the App
 
-1.  **Adding a New Task:**
-    * Look for the input field (usually at the bottom or top of the task list) labeled "Add a new task..." or something similar.
-    * Type your task description into the field.
-    * Press **Enter** or click the "Add Task" button (if available) to add the task to your list.
+Upon launching the application, you'll be redirected to the **Login** page.
 
-2.  **Marking a Task as Complete:**
-    * Each task will have a checkbox or an icon (like a circle or an empty square) next to it.
-    * Click this element to toggle the task's completion status. A completed task might look different (e.g., its text crossed out, a checkmark appearing).
+1.  **Registering a New Account:**
+    * On the Login page, click the "Register Here" button.
+    * Enter your desired email and password. Use the **eye icon** to toggle password visibility.
+    * Alternatively, click "Sign up with Google" for quick registration/login.
+    * Click "Register" or complete the Google sign-in process. You'll be redirected to the main Task Manager.
 
-3.  **Deleting a Task:**
-    * Next to each task, you'll find a delete icon (like a trash can).
-    * Click this icon to permanently remove the task from your list.
+2.  **Logging In:**
+    * Enter your registered email and password. Use the **eye icon** to toggle password visibility.
+    * Alternatively, click "Sign in with Google" to log in with your Google account.
+    * Click "Log In" or complete the Google sign-in process. You'll be redirected to the main Task Manager.
 
-Your tasks will automatically save to the Firebase backend, so they'll stick around even if you close and reopen the app.
+3.  **Adding a New Task:**
+    * Type your task description into the "Add a new task..." field.
+    * Press **Enter** or click the "Add Task" button. The task will instantly appear in your list.
+
+4.  **Marking a Task as Complete:**
+    * Click the **checkbox** next to any task to toggle its completion status. Completed tasks will appear visually different (e.g., text crossed out).
+
+5.  **Editing a Task:**
+    * Click the **pencil icon** next to the task you wish to edit.
+    * An overlay dialog will appear (full-screen on mobile).
+    * Modify the task description in the input field.
+    * Click the "Save" button to apply changes, or "Cancel" to discard.
+
+6.  **Deleting a Task:**
+    * Click the **trash can icon** next to the task you want to remove. The task will be permanently deleted from your list.
+
+7.  **Toggling Dark/Light Mode:**
+    * **Desktop:** Click the **moon/sun icon** next to "My Task Manager" title to switch between dark and light themes.
+    * **Mobile:** Click the **hamburger menu icon** (three lines) next to "My Task Manager" title. In the slide-out menu, click the "Toggle Dark/Light Mode" option.
+    * Your preference will be saved for future visits.
+
+8.  **Logging Out:**
+    * **Desktop:** Click the **red logout icon** next to "My Task Manager" title.
+    * **Mobile:** Click the **hamburger menu icon**, then select "Logout" from the slide-out menu.
+
+---
