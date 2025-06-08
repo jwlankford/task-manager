@@ -1,23 +1,29 @@
 // src/main.js
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router'; // Make sure this is correct
 
 // Vuetify
-import 'vuetify/styles' // Import Vuetify styles
-import { createVuetify } from 'vuetify' // Import Vuetify's createVuetify function
-import * as components from 'vuetify/components' // Import all Vuetify components
-import * as directives from 'vuetify/directives' // Import all Vuetify directives
-import '@mdi/font/css/materialdesignicons.css' // Optional: Import Material Design Icons
+import 'vuetify/styles';
+import { createVuetify } from 'vuetify';
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+import { aliases, mdi } from 'vuetify/iconsets/mdi';
+import '@mdi/font/css/materialdesignicons.css' // Import MDI CSS
 
 const vuetify = createVuetify({
   components,
   directives,
-  // Optional: You can configure themes, icons, etc. here
   icons: {
-    defaultSet: 'mdi', // This is important if you use mdi fonts
+    defaultSet: 'mdi',
+    aliases,
+    sets: {
+      mdi,
+    },
   },
-})
+});
 
 createApp(App)
-  .use(vuetify) // Tell Vue to use Vuetify
-  .mount('#app')
+  .use(router) // <-- THIS IS KEY! It mounts your root component *via* the router.
+  .use(vuetify)
+  .mount('#app');
