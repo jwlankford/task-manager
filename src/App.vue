@@ -12,43 +12,100 @@
     </div>
 
     <ul class="task-list">
-      <li v-for="(task, index) in tasks" :key="index" :class="{ completed: task.completed }">
-        <input type="checkbox" v-model="task.completed" />
+      <li v-for="task in tasks" :key="task.id" :class="{ completed: task.completed }">
+        <input type="checkbox" v-model="task.completed" @change="toggleTaskCompletion(task)" />
         <span>{{ task.text }}</span>
-        <button @click="removeTask(index)">Remove</button>
+        <button @click="removeTask(task.id)">Remove</button>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+
+// Your Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBDpgeSgZmDllDsBds_j2izgGLchOqcqK8",
+  authDomain: "tasksmanager-8e768.firebaseapp.com",
+  projectId: "tasksmanager-8e768",
+  storageBucket: "tasksmanager-8e768.firebasestorage.app",
+  messagingSenderId: "902344809807",
+  appId: "1:902344809807:web:10dc670d6485967713f93a",
+  measurementId: "G-QKRSEE0H45"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// Initialize Cloud Firestore and get a reference to the service
+const db = getFirestore(app);
+// Get a reference to the 'tasks' collection
+const tasksCollection = collection(db, 'tasks');
+
 export default {
   name: 'App',
   data() {
     return {
       newTask: '',
-      tasks: [
-        { text: 'Learn Vue.js', completed: false },
-        { text: 'Build a task manager', completed: true },
-        { text: 'Deploy the app', completed: false },
-      ],
+      tasks: [], // Tasks will now be loaded from Firebase
     };
   },
+  created() {
+    this.fetchTasks();
+  },
   methods: {
-    addTask() {
+    async fetchTasks() {
+      // Create a query against the collection.
+      const q = query(tasksCollection, orderBy('createdAt', 'asc')); // Order tasks by creation time
+
+      // Set up a real-time listener
+      onSnapshot(q, (snapshot) => {
+        const firebaseTasks = [];
+        snapshot.forEach((doc) => {
+          firebaseTasks.push({ id: doc.id, ...doc.data() });
+        });
+        this.tasks = firebaseTasks;
+      });
+    },
+    async addTask() {
       if (this.newTask.trim() !== '') {
-        this.tasks.push({ text: this.newTask.trim(), completed: false });
-        this.newTask = '';
+        try {
+          await addDoc(tasksCollection, {
+            text: this.newTask.trim(),
+            completed: false,
+            createdAt: new Date(), // Add a timestamp for ordering
+          });
+          this.newTask = '';
+        } catch (error) {
+          console.error("Error adding document: ", error);
+        }
       }
     },
-    removeTask(index) {
-      this.tasks.splice(index, 1);
+    async toggleTaskCompletion(task) {
+      const taskRef = doc(db, 'tasks', task.id);
+      try {
+        await updateDoc(taskRef, {
+          completed: task.completed,
+        });
+      } catch (error) {
+        console.error("Error updating document: ", error);
+      }
+    },
+    async removeTask(id) {
+      const taskRef = doc(db, 'tasks', id);
+      try {
+        await deleteDoc(taskRef);
+      } catch (error) {
+        console.error("Error removing document: ", error);
+      }
     },
   },
 };
 </script>
 
 <style>
+/* Your existing styles remain the same */
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
