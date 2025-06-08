@@ -12,14 +12,23 @@
               <v-col>
                 <v-text-field
                   v-model="newTask"
-                  label="Add a new task..."
+                  :label="editingTask ? 'Edit task...' : 'Add a new task...'"
                   variant="outlined"
                   density="comfortable"
                   hide-details
-                  @keyup.enter="addTask"
-                  append-inner-icon="mdi-plus-circle"
-                  @click:append-inner="addTask"
-                ></v-text-field>
+                  @keyup.enter="editingTask ? saveEditedTask() : addTask()"
+                  :append-inner-icon="editingTask ? 'mdi-check' : 'mdi-plus-circle'"
+                  @click:append-inner="editingTask ? saveEditedTask() : addTask()"
+                >
+                  <template v-if="editingTask" v-slot:append-outer>
+                    <v-btn
+                      icon="mdi-close"
+                      variant="text"
+                      color="red-darken-1"
+                      @click="cancelEdit"
+                    ></v-btn>
+                  </template>
+                </v-text-field>
               </v-col>
             </v-row>
 
@@ -40,41 +49,15 @@
                   </v-list-item-action>
                 </template>
 
-                <v-list-item-title v-if="editingTask !== task.id" class="text-h6 py-2">{{ task.text }}</v-list-item-title>
-                <v-list-item-content v-else>
-                  <v-text-field
-                    v-model="editedTaskText"
-                    label="Edit task"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    @keyup.enter="saveEdit(task)"
-                    @keyup.esc="cancelEdit"
-                    autofocus
-                  ></v-text-field>
-                </v-list-item-content>
+                <v-list-item-title class="text-h6 py-2">{{ task.text }}</v-list-item-title>
 
                 <template v-slot:append>
                   <v-btn
-                    v-if="editingTask !== task.id"
                     icon="mdi-pencil"
                     variant="text"
                     color="blue-darken-1"
                     @click="startEditing(task)"
-                  ></v-btn>
-                  <v-btn
-                    v-else
-                    icon="mdi-check"
-                    variant="text"
-                    color="green-darken-2"
-                    @click="saveEdit(task)"
-                  ></v-btn>
-                  <v-btn
-                    v-if="editingTask === task.id"
-                    icon="mdi-close"
-                    variant="text"
-                    color="grey-darken-1"
-                    @click="cancelEdit"
+                    :disabled="!!editingTask"
                   ></v-btn>
                   <v-btn
                     icon="mdi-delete"
@@ -121,7 +104,6 @@ export default {
       newTask: '',
       tasks: [],
       editingTask: null, // Stores the ID of the task being edited
-      editedTaskText: '', // Stores the text for the task being edited
     };
   },
   created() {
@@ -172,27 +154,30 @@ export default {
     },
     startEditing(task) {
       this.editingTask = task.id;
-      this.editedTaskText = task.text;
+      this.newTask = task.text; // Populate the input field with the task's current text
     },
-    async saveEdit(task) {
-      if (this.editedTaskText.trim() === '') {
-        // Optionally, you could prevent saving an empty task or show a warning
+    async saveEditedTask() {
+      if (this.newTask.trim() === '') {
+        console.warn("Task cannot be empty. Edit cancelled.");
         this.cancelEdit();
         return;
       }
-      const taskRef = doc(db, 'tasks', task.id);
-      try {
-        await updateDoc(taskRef, {
-          text: this.editedTaskText.trim(),
-        });
-        this.cancelEdit(); // Reset editing state
-      } catch (error) {
-        console.error("Error updating document: ", error);
+
+      if (this.editingTask) { // Ensure we are in edit mode
+        const taskRef = doc(db, 'tasks', this.editingTask);
+        try {
+          await updateDoc(taskRef, {
+            text: this.newTask.trim(),
+          });
+          this.cancelEdit(); // Reset editing state
+        } catch (error) {
+          console.error("Error updating document: ", error);
+        }
       }
     },
     cancelEdit() {
       this.editingTask = null;
-      this.editedTaskText = '';
+      this.newTask = ''; // Clear the input field
     },
   },
 };
