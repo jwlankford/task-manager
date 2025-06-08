@@ -1,19 +1,26 @@
-import { fileURLToPath, URL } from "node:url";
+// vite.config.js
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import path from 'path'; // Make sure 'path' is imported if you're using resolve.alias
 
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
-import vueDevTools from "vite-plugin-vue-devtools";
-
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueDevTools()],
+  plugins: [
+    vue(), // This is for Vite's build/dev server
+  ],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Ensure this is correct for your project structure
+      "@": path.resolve(__dirname, "./src"),
     },
   },
-  base:
-    process.env.NODE_ENV === "production"
-      ? "/task-manager/" // IMPORTANT: Replace 'task-manager' with your actual repository name
-      : "/",
+  test: {
+    environment: 'jsdom',
+    // THIS IS THE MOST CRITICAL PART FOR THE SYNTAXERROR:
+    plugins: [
+      vue(), // Ensure @vitejs/plugin-vue is also applied for Vitest
+    ],
+    // If you have any other Vitest specific options, they go here
+    // e.g., setupFiles: ['./vitest.setup.js'],
+    // globals: true,
+  },
 });
