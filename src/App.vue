@@ -8,27 +8,42 @@
           </v-card-title>
 
           <v-card-text>
-            <v-row no-gutters class="mb-6">
-              <v-col>
-                <v-text-field
+            <v-row no-gutters class="mb-6 align-center">
+              <v-col cols="12" sm="9"> <v-text-field
                   v-model="newTask"
                   :label="editingTask ? 'Edit task...' : 'Add a new task...'"
                   variant="outlined"
                   density="comfortable"
                   hide-details
                   @keyup.enter="editingTask ? saveEditedTask() : addTask()"
-                  :append-inner-icon="editingTask ? 'mdi-check' : 'mdi-plus-circle'"
-                  @click:append-inner="editingTask ? saveEditedTask() : addTask()"
-                >
-                  <template v-if="editingTask" v-slot:append-outer>
-                    <v-btn
-                      icon="mdi-close"
-                      variant="text"
-                      color="red-darken-1"
-                      @click="cancelEdit"
-                    ></v-btn>
-                  </template>
-                </v-text-field>
+                  :autofocus="editingTask !== null"
+                  ref="taskInput"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" sm="3" class="d-flex justify-end mt-2 mt-sm-0"> <v-btn
+                  v-if="!editingTask"
+                  icon="mdi-plus-circle"
+                  color="green-darken-2"
+                  size="large"
+                  class="ml-2"
+                  @click="addTask"
+                ></v-btn>
+                <v-btn
+                  v-if="editingTask"
+                  icon="mdi-check"
+                  color="green-darken-2"
+                  size="large"
+                  class="ml-2"
+                  @click="saveEditedTask"
+                ></v-btn>
+                <v-btn
+                  v-if="editingTask"
+                  icon="mdi-close"
+                  color="red-darken-1"
+                  size="large"
+                  class="ml-2"
+                  @click="cancelEdit"
+                ></v-btn>
               </v-col>
             </v-row>
 
@@ -121,17 +136,19 @@ export default {
       });
     },
     async addTask() {
-      if (this.newTask.trim() !== '') {
-        try {
-          await addDoc(tasksCollection, {
-            text: this.newTask.trim(),
-            completed: false,
-            createdAt: new Date(),
-          });
-          this.newTask = '';
-        } catch (error) {
-          console.error("Error adding document: ", error);
-        }
+      if (this.newTask.trim() === '') {
+        // Prevent adding empty tasks
+        return;
+      }
+      try {
+        await addDoc(tasksCollection, {
+          text: this.newTask.trim(),
+          completed: false,
+          createdAt: new Date(),
+        });
+        this.newTask = ''; // Clear the input after adding
+      } catch (error) {
+        console.error("Error adding document: ", error);
       }
     },
     async toggleTaskCompletion(task) {
@@ -155,6 +172,10 @@ export default {
     startEditing(task) {
       this.editingTask = task.id;
       this.newTask = task.text; // Populate the input field with the task's current text
+      // Focus the input field when starting edit
+      this.$nextTick(() => {
+        this.$refs.taskInput.focus();
+      });
     },
     async saveEditedTask() {
       if (this.newTask.trim() === '') {
