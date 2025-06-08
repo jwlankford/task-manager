@@ -82,11 +82,16 @@
           hide-details
           @keyup.enter="saveEditedTask"
           ref="editTaskInput"
-        ></v-text-field>
+          class="mb-4" ></v-text-field>
+        <v-btn
+          color="success"
+          variant="elevated"
+          block
+          @click="saveEditedTask"
+          class="mb-4" >Save</v-btn>
       </v-card-text>
       <v-card-actions class="justify-end">
         <v-btn color="error" variant="text" @click="cancelEdit">Cancel</v-btn>
-        <v-btn color="success" variant="elevated" @click="saveEditedTask">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
